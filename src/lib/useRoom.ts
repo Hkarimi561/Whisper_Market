@@ -112,6 +112,9 @@ export function useRoom(code: string, mode: 'player' | 'tv'): RoomApi {
     s.on('connect_error', () => setStatus((st) => (st === 'denied' ? st : 'offline')));
     s.on('state', (st) => {
       offset.current = st.serverNow - Date.now();
+      // tolerate a server that predates the warehouse-capacity setting
+      st.settings.warehouseCapacity ??= 12;
+      if (st.game) st.game.settings.warehouseCapacity ??= 12;
       setState(st);
     });
     s.on('kicked', () => {

@@ -18,6 +18,7 @@ export const COMPONENT_NAMES: Record<Component, string> = { target: 'کالا', 
 const FA_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 /** Persian digits with thousands separator. */
 export function toFa(n: number | string, group = true): string {
+  if (n === undefined || n === null || (typeof n === 'number' && !Number.isFinite(n))) return '؟';
   const s = typeof n === 'number' ? (group ? Math.round(n).toLocaleString('en-US') : String(Math.round(n))) : n;
   return s.replace(/\d/g, (d) => FA_DIGITS[+d]).replace(/,/g, '٬');
 }
