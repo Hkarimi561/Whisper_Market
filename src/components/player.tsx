@@ -11,7 +11,7 @@ import { fa, errorText } from '../i18n/fa';
 import type { RoomState } from '../lib/protocol';
 import { buzz, sfx } from '../lib/sound';
 import { useCountdown, type RoomApi } from '../lib/useRoom';
-import { AnimatedNumber, Fuse, GoodIcon, Lantern, Purse, Trend, WaxSeal, Warehouse, fmtTime } from './art';
+import { AnimatedNumber, Fuse, GOOD_COLOR, GoodIcon, Lantern, Purse, Trend, WaxSeal, Warehouse, fmtTime } from './art';
 import { FinalStage } from './final';
 import { RevealStage } from './reveal';
 import { ClaimNotice, ClueCardView, ClueLetter, ContractCard, GoodsRow, NewsCard, PriceTag, nameMap } from './shared';
@@ -246,9 +246,17 @@ function ClaimsPanel({ view, act }: { view: PlayerView; act: Act }) {
         <p className="mb-2 text-sm font-black">{fa.market.claimLeft(toFa(view.me.claimsLeft, false))}</p>
         <div className="grid grid-cols-5 gap-1.5">
           {view.goods.map((g) => (
-            <button key={g} className={`plank grid min-h-14 place-items-center p-1 ${good === g ? 'ring-2 ring-lantern' : ''}`} onClick={() => setGood(g)} aria-pressed={good === g} aria-label={goodName(g)}>
+            <button
+              key={g}
+              className={`plank relative grid min-h-14 place-items-center p-1 transition ${good && good !== g ? 'opacity-50' : ''}`}
+              style={good === g ? { background: `linear-gradient(180deg, ${GOOD_COLOR[g]}, ${GOOD_COLOR[g]}99)`, boxShadow: `0 0 0 3px ${GOOD_COLOR[g]}, 0 0 18px ${GOOD_COLOR[g]}aa`, color: '#1b1206' } : undefined}
+              onClick={() => setGood(g)}
+              aria-pressed={good === g}
+              aria-label={goodName(g)}
+            >
+              {good === g && <span className="absolute end-1 top-0.5 text-xs font-black" aria-hidden>✓</span>}
               <GoodIcon good={g} size={30} />
-              <span className="text-[10px] font-bold">{goodName(g)}</span>
+              <span className="text-[10px] font-black">{goodName(g)}</span>
             </button>
           ))}
         </div>
@@ -691,7 +699,7 @@ function OrdersPhase({ view, act }: { view: PlayerView; act: Act }) {
               </div>
               <div className="mt-2 flex items-center justify-between gap-2">
                 <div className="min-w-24 text-sm font-black">{q > 0 ? <Trend dir="up" label={`${fa.orders.buy} ${toFa(q, false)}`} /> : q < 0 ? <Trend dir="down" label={`${fa.orders.sell} ${toFa(-q, false)}`} /> : <span className="text-fog">{fa.orders.none}</span>}</div>
-                <Stepper value={q} min={-me.inventory[g]} max={CONFIG.warehouseCapacity} label={goodName(g)} onChange={(v) => setDraft((d) => ({ ...d, [g]: v }))} format={(v) => (v === 0 ? '·' : toFa(Math.abs(v), false))} />
+                <Stepper value={q} min={-me.inventory[g]} max={Math.max(q, q + CONFIG.warehouseCapacity - projUnits)} label={goodName(g)} onChange={(v) => setDraft((d) => ({ ...d, [g]: v }))} format={(v) => (v === 0 ? '·' : toFa(Math.abs(v), false))} />
               </div>
               {q !== 0 && (
                 <p className="mt-1 text-xs text-paper/75">
