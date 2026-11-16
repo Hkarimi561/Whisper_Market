@@ -1,0 +1,15 @@
+node_modules
+.next
+.git
+.env
+.env.*
+!.env.example
+package-lock.json
+coverage
+tests
+scripts
+*.md
+Dockerfile
+docker-compose.yml
+.claude
+graphify-out

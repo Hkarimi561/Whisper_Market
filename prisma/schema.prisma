@@ -1,0 +1,150 @@
+// Whisper Market — database schema.
+// Live game state lives in memory; this schema stores snapshots (for resume)
+// and the history used to build the end-of-game recap.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  code      String   @id
+  hostId    String?
+  settings  Json
+  status    String   @default("lobby")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  players  Player[]
+  matches  Match[]
+  snapshot RoomSnapshot?
+}
+
+model RoomSnapshot {
+  code      String   @id
+  state     Json
+  phase     String
+  round     Int
+  updatedAt DateTime @updatedAt
+
+  room Room @relation(fields: [code], references: [code], onDelete: Cascade)
+}
+
+model Player {
+  id        String   @id
+  roomCode  String
+  nickname  String
+  seat      Int
+  isBot     Boolean  @default(false)
+  tokenHash String
+  googleSub String?
+  createdAt DateTime @default(now())
+
+  room Room @relation(fields: [roomCode], references: [code], onDelete: Cascade)
+
+  @@index([roomCode])
+}
+
+model Match {
+  id         String    @id
+  roomCode   String
+  number     Int
+  seed       Int
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  results    Json?
+
+  room   Room    @relation(fields: [roomCode], references: [code], onDelete: Cascade)
+  rounds Round[]
+
+  @@index([roomCode])
+}
+
+model Round {
+  id         String   @id
+  matchId    String
+  number     Int
+  storm      Boolean  @default(false)
+  events     Json
+  publicNews Json
+  clues      Json
+  prices     Json
+  execution  Json
+  nextPrices Json
+  createdAt  DateTime @default(now())
+
+  match     Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  orders    Order[]
+  trades    Trade[]
+  clueSales ClueSale[]
+  claims    Claim[]
+  auction   Auction?
+
+  @@unique([matchId, number])
+}
+
+model Order {
+  id       String @id
+  roundId  String
+  playerId String
+  orders   Json
+  bid      Int?
+
+  round Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@index([roundId])
+}
+
+model Trade {
+  id         String @id
+  roundId    String
+  fromPlayer String
+  toPlayer   String
+  give       Json
+  receive    Json
+
+  round Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@index([roundId])
+}
+
+model ClueSale {
+  id       String @id
+  roundId  String
+  sellerId String
+  buyerId  String
+  price    Int
+
+  round Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@index([roundId])
+}
+
+model Claim {
+  id         String @id
+  roundId    String
+  playerId   String
+  good       String
+  direction  String
+  evaluation Json
+
+  round Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
+
+  @@index([roundId])
+}
+
+model Auction {
+  id       String  @id
+  roundId  String  @unique
+  contract Json
+  bids     Json
+  winnerId String?
+  outcome  Json
+
+  round Round @relation(fields: [roundId], references: [id], onDelete: Cascade)
+}
