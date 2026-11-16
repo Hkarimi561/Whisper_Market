@@ -65,7 +65,7 @@ tests/engine  tests/server
 |---|---|
 | players | 3–6 (≤4 players: 4 goods, else 5) |
 | base prices | wheat 50 · fuel 80 · iron 100 · medicine 120 · chips 150 |
-| start cash / warehouse | 1000 / 12 units |
+| start cash / warehouse | 1000 / 12 units by default (host-selectable 6–40 in Advanced settings) |
 | magnitudes | low 10 % · medium 20 % · high 30 % (storm ×1.5) |
 | demand impact | 2 % per unit of net demand; clamp 50 %–200 % of current |
 | carry-over | 0.5 of (execution − current); floor 20 % of base |

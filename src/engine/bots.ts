@@ -1,6 +1,6 @@
 // Bot strategy. A bot only sees what a human player would see (its PlayerView).
 import type { Action } from './actions';
-import { CONFIG, type Good } from './config';
+import type { Good } from './config';
 import { Rng } from './rng';
 import { totalUnits } from './prices';
 import type { Clue, Direction, Magnitude } from './types';
@@ -120,7 +120,7 @@ export function planOrders(view: PlayerView, rng: Rng): Action {
     const short = Math.max(0, c.quantity - have);
     const unit = view.prices[c.good];
     const buyCost = short * unit * 1.35;
-    const freeCap = CONFIG.warehouseCapacity - used;
+    const freeCap = view.settings.warehouseCapacity - used;
     const margin = c.quantity * c.unitPrice - c.quantity * unit;
     if (margin > 40 && short <= freeCap && me.cash > buyCost + 60) {
       const want = Math.floor(margin * rng.float(0.35, 0.7));
@@ -144,7 +144,7 @@ export function planOrders(view: PlayerView, rng: Rng): Action {
     if (sc >= 0.35) {
       const unit = view.prices[g] * 1.1;
       const wanted = Math.max(1, Math.min(5, Math.round(sc * 3)));
-      const q = Math.max(0, Math.min(wanted, Math.floor((budget * 0.5) / unit), CONFIG.warehouseCapacity - used));
+      const q = Math.max(0, Math.min(wanted, Math.floor((budget * 0.5) / unit), view.settings.warehouseCapacity - used));
       if (q > 0) {
         orders[g] = q;
         used += q;

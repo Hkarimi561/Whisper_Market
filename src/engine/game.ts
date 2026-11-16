@@ -345,13 +345,17 @@ export function registerClaim(s: GameState, pid: string, good: Good, direction: 
   r.claims.push({ id: nid(s, 'cl'), playerId: pid, good, direction, phase: s.phase });
 }
 
-function normBundle(b: unknown, goods: Good[]): Bundle {
+export function capacityOf(s: GameState): number {
+  return s.settings.warehouseCapacity ?? CONFIG.warehouseCapacity;
+}
+
+function normBundle(b: unknown, goods: Good[], cap: number): Bundle {
   const out: Bundle = { goods: {}, coins: 0 };
   const src = (b ?? {}) as Partial<Bundle>;
   if (typeof src.coins === 'number' && Number.isFinite(src.coins)) out.coins = Math.max(0, Math.trunc(src.coins));
   for (const g of goods) {
     const q = src.goods?.[g];
-    if (typeof q === 'number' && Number.isFinite(q) && Math.trunc(q) > 0) out.goods[g] = Math.min(Math.trunc(q), CONFIG.warehouseCapacity);
+    if (typeof q === 'number' && Number.isFinite(q) && Math.trunc(q) > 0) out.goods[g] = Math.min(Math.trunc(q), cap);
   }
   return out;
 }
@@ -361,8 +365,8 @@ function ensureTradeOpen(s: GameState) {
   if (s.round < 2) throw new GameError('locked');
 }
 
-function canHold(p: PlayerState, give: Bundle, receive: Bundle): boolean {
-  return totalUnits(p.inventory) - totalUnits(give.goods) + totalUnits(receive.goods) <= CONFIG.warehouseCapacity;
+function canHold(p: PlayerState, give: Bundle, receive: Bundle, cap: number): boolean {
+  return totalUnits(p.inventory) - totalUnits(give.goods) + totalUnits(receive.goods) <= cap;
 }
 
 function hasAssets(p: PlayerState, b: Bundle): boolean {
@@ -376,8 +380,8 @@ export function proposeTrade(s: GameState, from: string, to: string, give: unkno
   const a = getPlayer(s, from);
   const b = getPlayer(s, to);
   if (a.id === b.id) throw new GameError('self-trade');
-  const g = normBundle(give, s.goods);
-  const rcv = normBundle(receive, s.goods);
+  const g = normBundle(give, s.goods, capacityOf(s));
+  const rcv = normBundle(receive, s.goods, capacityOf(s));
   if (bundleIsEmpty(g) || bundleIsEmpty(rcv)) throw new GameError('empty-offer');
   const band = checkTradeBand(g, rcv, s.prices);
   if (!band.ok) throw new GameError(band.reason === 'band' ? 'trade-band' : 'bad-offer');
@@ -406,7 +410,7 @@ export function respondTrade(s: GameState, pid: string, offerId: string, accept:
     offer.status = 'cancelled';
     throw new GameError('not-enough-assets');
   }
-  if (!canHold(a, offer.give, offer.receive) || !canHold(b, offer.receive, offer.give)) throw new GameError('warehouse-full');
+  if (!canHold(a, offer.give, offer.receive, capacityOf(s)) || !canHold(b, offer.receive, offer.give, capacityOf(s))) throw new GameError('warehouse-full');
   if (!checkTradeBand(offer.give, offer.receive, s.prices).ok) throw new GameError('trade-band');
   a.cash += offer.receive.coins - offer.give.coins;
   b.cash += offer.give.coins - offer.receive.coins;
@@ -480,7 +484,7 @@ export function setOrders(
   const r = currentRound(s);
   const po = r.orders[pid];
   if (po.sealed) throw new GameError('sealed');
-  po.orders = sanitizeOrders(input.orders, p.inventory, s.goods);
+  po.orders = sanitizeOrders(input.orders, p.inventory, s.goods, capacityOf(s));
   if (r.contractAuction) {
     const raw = input.bid;
     if (raw === null || raw === undefined || raw === 0) po.bid = null;
@@ -552,6 +556,7 @@ function resolveRound(s: GameState) {
     startPrices,
     goods,
     reserve,
+    capacityOf(s),
   );
 
   const lines: Record<string, PlayerRoundResult['lines']> = {};

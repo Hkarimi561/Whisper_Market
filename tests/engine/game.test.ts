@@ -254,3 +254,22 @@ describe('clue cards', () => {
     expect(r.clues.p2.id).not.toBe(r.clues.p1.id);
   });
 });
+
+describe('warehouse capacity setting', () => {
+  it('is sanitised, used by trades, and bots play with a larger warehouse', async () => {
+    const s = makeGame(4, 11, { warehouseCapacity: 16 });
+    expect(s.settings.warehouseCapacity).toBe(16);
+    expect(makeGame(4, 11, { warehouseCapacity: 999 }).settings.warehouseCapacity).toBe(40);
+    goTo(s, 2, 'market');
+    getPlayer(s, 'p1').inventory.iron = 3;
+    getPlayer(s, 'p2').inventory.wheat = 14; // would overflow at 12, fits at 16
+    const price = s.prices.iron;
+    const o = proposeTrade(s, 'p1', 'p2', { goods: { iron: 2 }, coins: 0 }, { goods: {}, coins: price * 2 });
+    respondTrade(s, 'p2', o.id, true);
+    expect(getPlayer(s, 'p2').inventory.iron).toBe(2);
+    const { runBotMatch } = await import('../../src/engine/sim');
+    const res = runBotMatch({ seed: 5, bots: 4, settings: { warehouseCapacity: 20 } });
+    expect(res.errors).toEqual([]);
+    for (const p of res.state.players) expect(Object.values(p.inventory).reduce((x, y) => x + y, 0)).toBeLessThanOrEqual(20);
+  });
+});

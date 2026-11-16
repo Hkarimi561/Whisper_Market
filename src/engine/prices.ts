@@ -61,6 +61,7 @@ export function sanitizeOrders(
   raw: Partial<Record<Good, number>> | undefined,
   inventory: Inventory,
   goods: Good[],
+  capacity: number = CONFIG.warehouseCapacity,
 ): Partial<Record<Good, number>> {
   const out: Partial<Record<Good, number>> = {};
   if (!raw) return out;
@@ -68,7 +69,7 @@ export function sanitizeOrders(
     let q = raw[g];
     if (typeof q !== 'number' || !Number.isFinite(q)) continue;
     q = Math.trunc(q);
-    if (q > 0) out[g] = Math.min(q, CONFIG.warehouseCapacity);
+    if (q > 0) out[g] = Math.min(q, capacity);
     else if (q < 0) {
       const sell = Math.min(-q, inventory[g] ?? 0);
       if (sell > 0) out[g] = -sell;
@@ -91,12 +92,13 @@ export function resolveOrders(
   prices: PriceMap,
   goods: Good[],
   reserve: Record<string, number> = {},
+  capacity: number = CONFIG.warehouseCapacity,
 ): OrderOutcome {
   const requested: OrderOutcome['requested'] = {};
   const netReq = {} as Record<Good, number>;
   for (const g of goods) netReq[g] = 0;
   for (const p of players) {
-    const o = sanitizeOrders(orders[p.id]?.orders, p.inventory, goods);
+    const o = sanitizeOrders(orders[p.id]?.orders, p.inventory, goods, capacity);
     requested[p.id] = o;
     for (const g of goods) netReq[g] += o[g] ?? 0;
   }
@@ -111,7 +113,7 @@ export function resolveOrders(
     const ex: Partial<Record<Good, number>> = {};
     let sells = 0;
     for (const g of goods) if ((req[g] ?? 0) < 0) sells += -(req[g] as number);
-    let freeCap = CONFIG.warehouseCapacity - (totalUnits(p.inventory) - sells);
+    let freeCap = capacity - (totalUnits(p.inventory) - sells);
     let cash = p.cash - (reserve[p.id] ?? 0);
     for (const g of goods) {
       const q = req[g] ?? 0;

@@ -42,7 +42,7 @@ function Stepper({ value, onChange, min, max, step = 1, label, format }: { value
   );
 }
 
-function BundleEditor({ goods, value, onChange, label }: { goods: Good[]; value: Bundle; onChange: (b: Bundle) => void; label: string }) {
+function BundleEditor({ goods, value, onChange, label, cap }: { goods: Good[]; value: Bundle; onChange: (b: Bundle) => void; label: string; cap: number }) {
   return (
     <fieldset className="rounded-xl bg-black/20 p-2">
       <legend className="px-2 text-sm font-black text-lantern">{label}</legend>
@@ -55,7 +55,7 @@ function BundleEditor({ goods, value, onChange, label }: { goods: Good[]; value:
               <button className="btn btn-ghost !min-h-11 !w-9 !px-0" onClick={() => onChange({ ...value, goods: { ...value.goods, [g]: Math.max(0, (value.goods[g] ?? 0) - 1) } })} aria-label={`${goodName(g)} −`}>
                 −
               </button>
-              <button className="btn btn-ghost !min-h-11 !w-9 !px-0" onClick={() => onChange({ ...value, goods: { ...value.goods, [g]: Math.min(CONFIG.warehouseCapacity, (value.goods[g] ?? 0) + 1) } })} aria-label={`${goodName(g)} +`}>
+              <button className="btn btn-ghost !min-h-11 !w-9 !px-0" onClick={() => onChange({ ...value, goods: { ...value.goods, [g]: Math.min(cap, (value.goods[g] ?? 0) + 1) } })} aria-label={`${goodName(g)} +`}>
                 +
               </button>
             </div>
@@ -140,9 +140,9 @@ function PrivateStrip({ view }: { view: PlayerView }) {
         </p>
       </div>
       <div className="ms-auto flex flex-col items-end gap-0.5">
-        <Warehouse small inventory={me.inventory} goods={view.goods} />
+        <Warehouse small inventory={me.inventory} goods={view.goods} capacity={view.settings.warehouseCapacity} />
         <span className="text-[11px] text-fog">
-          {fa.orders.warehouse} {toFa(units, false)}/{toFa(CONFIG.warehouseCapacity, false)}
+          {fa.orders.warehouse} {toFa(units, false)}/{toFa(view.settings.warehouseCapacity, false)}
         </span>
       </div>
     </div>
@@ -355,8 +355,8 @@ function TradePanel({ view, act }: { view: PlayerView; act: Act }) {
             </button>
           ))}
         </div>
-        <BundleEditor goods={view.goods} value={give} onChange={setGive} label={fa.market.give} />
-        <BundleEditor goods={view.goods} value={recv} onChange={setRecv} label={fa.market.receive} />
+        <BundleEditor goods={view.goods} value={give} onChange={setGive} label={fa.market.give} cap={view.settings.warehouseCapacity} />
+        <BundleEditor goods={view.goods} value={recv} onChange={setRecv} label={fa.market.receive} cap={view.settings.warehouseCapacity} />
         <p className={`rounded-lg px-3 py-2 text-sm font-bold ${band.ok ? 'bg-moss/20 text-mosslight' : 'bg-white/5 text-fog'}`}>
           {band.coinRange ? `${fa.market.allowed}: ${toFa(band.coinRange.min)} – ${toFa(band.coinRange.max)} ${fa.market.coins}` : fa.market.bandMix} {band.ok && !empty(give) && !empty(recv) ? '✓' : ''}
         </p>
@@ -661,7 +661,8 @@ function OrdersPhase({ view, act }: { view: PlayerView; act: Act }) {
     projUnits += q;
     estCost += q * view.prices[g];
   }
-  const over = projUnits > CONFIG.warehouseCapacity;
+  const cap = view.settings.warehouseCapacity;
+  const over = projUnits > cap;
   const c = view.auctionContract;
 
   if (sealed)
@@ -699,7 +700,7 @@ function OrdersPhase({ view, act }: { view: PlayerView; act: Act }) {
               </div>
               <div className="mt-2 flex items-center justify-between gap-2">
                 <div className="min-w-24 text-sm font-black">{q > 0 ? <Trend dir="up" label={`${fa.orders.buy} ${toFa(q, false)}`} /> : q < 0 ? <Trend dir="down" label={`${fa.orders.sell} ${toFa(-q, false)}`} /> : <span className="text-fog">{fa.orders.none}</span>}</div>
-                <Stepper value={q} min={-me.inventory[g]} max={Math.max(q, q + CONFIG.warehouseCapacity - projUnits)} label={goodName(g)} onChange={(v) => setDraft((d) => ({ ...d, [g]: v }))} format={(v) => (v === 0 ? '·' : toFa(Math.abs(v), false))} />
+                <Stepper value={q} min={-me.inventory[g]} max={Math.max(q, q + cap - projUnits)} label={goodName(g)} onChange={(v) => setDraft((d) => ({ ...d, [g]: v }))} format={(v) => (v === 0 ? '·' : toFa(Math.abs(v), false))} />
               </div>
               {q !== 0 && (
                 <p className="mt-1 text-xs text-paper/75">
@@ -731,9 +732,9 @@ function OrdersPhase({ view, act }: { view: PlayerView; act: Act }) {
         </div>
       )}
       <div className="glass grid gap-2 p-3">
-        <Warehouse inventory={proj} goods={view.goods} />
+        <Warehouse inventory={proj} goods={view.goods} capacity={cap} />
         <p className={`text-sm font-bold ${over ? 'text-waxlight' : 'text-fog'}`}>
-          {over ? `⚠ ${fa.orders.full}` : `${fa.orders.warehouse} ${toFa(Math.min(projUnits, 99), false)}/${toFa(CONFIG.warehouseCapacity, false)}`} · {fa.orders.estCost}: <span dir="ltr">{(estCost >= 0 ? '−' : '+') + toFa(Math.abs(estCost))}</span>
+          {over ? `⚠ ${fa.orders.full}` : `${fa.orders.warehouse} ${toFa(Math.min(projUnits, 99), false)}/${toFa(cap, false)}`} · {fa.orders.estCost}: <span dir="ltr">{(estCost >= 0 ? '−' : '+') + toFa(Math.abs(estCost))}</span>
         </p>
       </div>
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-brass/30 bg-night/95 p-3 backdrop-blur">

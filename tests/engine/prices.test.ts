@@ -95,3 +95,13 @@ describe('trade price band', () => {
     expect(checkTradeBand({ goods: { iron: 1 }, coins: 0 }, { goods: { wheat: 4 }, coins: 0 }, prices).ok).toBe(false);
   });
 });
+
+describe('configurable warehouse capacity', () => {
+  it('scales buys by the given capacity', () => {
+    const a = { id: 'a', cash: 100000, inventory: { ...emptyInventory(), wheat: 10 } };
+    const small = resolveOrders([a], { a: po({ iron: 9 }) }, prices, [...goods], {}, 12);
+    const big = resolveOrders([a], { a: po({ iron: 9 }) }, prices, [...goods], {}, 20);
+    expect(small.executed.a.iron).toBe(2);
+    expect(big.executed.a.iron).toBe(9);
+  });
+});

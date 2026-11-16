@@ -18,6 +18,8 @@ export const CONFIG = {
   goodsForPlayers: (n: number): Good[] => (n <= 4 ? GOODS.slice(0, 4) : GOODS.slice(0, 5)) as Good[],
   startCash: 1000,
   warehouseCapacity: 12,
+  warehouseMin: 6,
+  warehouseMax: 40,
 
   magnitudes: { low: 0.1, medium: 0.2, high: 0.3 },
   stormMultiplier: 1.5,
@@ -63,6 +65,7 @@ export const CONFIG = {
 export interface Settings {
   rounds: number;
   tribuneSeconds: number;
+  warehouseCapacity: number;
   marketSeconds: number;
   orderSeconds: number;
   whisperAllowed: boolean;
@@ -74,6 +77,7 @@ export const PRESETS: Record<'open' | 'busy', Settings> = {
   open: {
     rounds: CONFIG.rounds.default,
     tribuneSeconds: 20,
+    warehouseCapacity: CONFIG.warehouseCapacity,
     marketSeconds: 120,
     orderSeconds: 30,
     whisperAllowed: false,
@@ -83,6 +87,7 @@ export const PRESETS: Record<'open' | 'busy', Settings> = {
   busy: {
     rounds: CONFIG.rounds.default,
     tribuneSeconds: 30,
+    warehouseCapacity: CONFIG.warehouseCapacity,
     marketSeconds: 180,
     orderSeconds: 30,
     whisperAllowed: true,
@@ -104,6 +109,7 @@ export function sanitizeSettings(input: Partial<Settings> | undefined, base: Set
   return {
     rounds: clamp(s.rounds, CONFIG.rounds.min, CONFIG.rounds.max, base.rounds),
     tribuneSeconds: clamp(s.tribuneSeconds, 5, 90, base.tribuneSeconds),
+    warehouseCapacity: clamp(s.warehouseCapacity, CONFIG.warehouseMin, CONFIG.warehouseMax, base.warehouseCapacity ?? CONFIG.warehouseCapacity),
     marketSeconds: clamp(s.marketSeconds, 20, 600, base.marketSeconds),
     orderSeconds: clamp(s.orderSeconds, 10, 180, base.orderSeconds),
     whisperAllowed: typeof s.whisperAllowed === 'boolean' ? s.whisperAllowed : base.whisperAllowed,

@@ -389,7 +389,7 @@ export class RoomManager {
       case 'preset':
         if (room.game) fail('in-progress');
         if (c.preset !== 'open' && c.preset !== 'busy') fail('bad-preset');
-        room.settings = { ...PRESETS[c.preset], rounds: room.settings.rounds, chatEnabled: room.settings.chatEnabled };
+        room.settings = { ...PRESETS[c.preset], rounds: room.settings.rounds, chatEnabled: room.settings.chatEnabled, warehouseCapacity: room.settings.warehouseCapacity };
         return this.touch(room, true);
       case 'addBot': {
         if (room.game) fail('in-progress');

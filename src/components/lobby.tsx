@@ -136,6 +136,7 @@ export function Lobby({ state, api }: { state: RoomState; api: RoomApi }) {
         <details className="group">
           <summary className="btn btn-ghost w-full cursor-pointer text-sm">{fa.lobby.advanced}</summary>
           <div className="mt-3 grid gap-2">
+            <Num label={fa.lobby.warehouse} value={s.warehouseCapacity} min={CONFIG.warehouseMin} max={CONFIG.warehouseMax} step={2} onChange={(v) => set({ warehouseCapacity: v })} disabled={!isHost} />
             <Num label={fa.lobby.rounds} value={s.rounds} min={CONFIG.rounds.min} max={CONFIG.rounds.max} onChange={(v) => set({ rounds: v })} disabled={!isHost} />
             <Num label={fa.lobby.tribune} value={s.tribuneSeconds} min={10} max={90} step={5} onChange={(v) => set({ tribuneSeconds: v })} disabled={!isHost} />
             <Num label={fa.lobby.market} value={s.marketSeconds} min={30} max={600} step={15} onChange={(v) => set({ marketSeconds: v })} disabled={!isHost} />
