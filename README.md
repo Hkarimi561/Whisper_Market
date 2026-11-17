@@ -21,6 +21,14 @@ docker compose up --build
 
 این تنها دستور لازم است: PostgreSQL بالا می‌آید، مهاجرت‌های Prisma خودکار اجرا می‌شود و برنامه روی <http://localhost:3000> در دسترس است. (رمز و نام پایگاه‌داده را می‌توان با `.env` عوض کرد؛ نمونه: `.env.example`.)
 
+اگر پایگاه‌داده‌ات از قبل وجود دارد و فقط یک `DATABASE_URL` کامل داری (مثلاً `postgresql://user:pass@host:5432/dbname`):
+
+```bash
+DATABASE_URL='postgresql://user:pass@host:5432/dbname' docker compose -f docker-compose.external-db.yml up --build
+```
+
+این حالت فقط برنامه را بالا می‌آورد و مهاجرت‌ها را روی همان پایگاه‌داده اجرا می‌کند.
+
 ### بازی با گوشی‌ها روی یک وای‌فای
 
 ۱. IP شبکهٔ محلی کامپیوتر را پیدا کن (مثلاً `192.168.1.20`؛ در ویندوز `ipconfig` و در مک/لینوکس `ifconfig`/`ip a`).
@@ -67,6 +75,12 @@ docker compose up --build
 ```
 
 That is the only command needed. It starts PostgreSQL (named volume, healthcheck), the app waits for the database, runs `prisma migrate deploy`, then serves <http://localhost:3000>. Override defaults through `.env` (see `.env.example`).
+
+If you already have a PostgreSQL server and only a full `DATABASE_URL`:
+
+```bash
+DATABASE_URL='postgresql://user:pass@host:5432/dbname' docker compose -f docker-compose.external-db.yml up --build
+```
 
 ### Play on phones over the same Wi-Fi
 
