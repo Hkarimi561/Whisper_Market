@@ -9,7 +9,5 @@ coverage
 tests
 scripts
 *.md
-Dockerfile
-docker-compose.yml
 .claude
 graphify-out
