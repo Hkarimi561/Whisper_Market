@@ -14,7 +14,9 @@ COPY package.json ./
 COPY prisma ./prisma
 # npm 10 can crash with "Cannot read properties of null (reading 'edgesOut')" when resolving without a lockfile:
 # use a current npm, and fall back to a clean legacy-peer-deps install if it still fails.
-RUN (npm install -g npm@11 || true) \n  && (npm install --no-audit --no-fund \n      || (npm cache clean --force && rm -rf node_modules package-lock.json && npm install --no-audit --no-fund --legacy-peer-deps))
+RUN (npm install -g npm@11 || true) \
+  && (npm install --no-audit --no-fund \
+      || (npm cache clean --force && rm -rf node_modules package-lock.json && npm install --no-audit --no-fund --legacy-peer-deps))
 
 # ---- 2. build ---------------------------------------------------------------
 FROM deps AS build
